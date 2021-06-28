@@ -67,48 +67,60 @@ namespace SB.TechnicalTest
         /// <returns> Returns the lowest safe floor number</returns>
         public static int FindHighestSafeFloor(int lowestFTT = 1, int maxFTT = 100)
         {
-            if (FloorList == null) ConstructBuilding(maxFTT);
-            FloorList[lowestFTT] = FloorList[lowestFTT] != null ? (bool)FloorList[lowestFTT] : !Building.DropMarble(lowestFTT);
+            if (FloorList == null)
+            {
+                ConstructBuilding(maxFTT);
+            }
+
+            FloorList[lowestFTT] = FloorList[lowestFTT] ?? DropMarble(lowestFTT);
 
             if ((bool)FloorList[lowestFTT])
             {
-                if (FloorList[lowestFTT - 1] == true) return lowestFTT - 1;
-                // if you run a breaktest and set for example 75 as a test starting floor we still want to get the first safe floor so 
-                // let's start testing the floors bellow 75 or we can return a not found instead, that's depending how we define this in specs.
-
-                //there is no point to go under 0 as we assume the impact level is the ground level (floor 0)
-                return FindHighestSafeFloor(0, lowestFTT - 1);
-            }
-            else
-            {
-                FloorList[lowestFTT] = true;
-            }
-
-            int middle = GetTheMiddleValue(lowestFTT, maxFTT);
-            if (middle == lowestFTT) middle = lowestFTT + 1;
-            FloorList[middle] = FloorList[middle] != null ? (bool)FloorList[middle] : !Building.DropMarble(middle);
-
-            if ((bool)FloorList[middle])
-            {
-                if (FloorList[middle - 1] == true) return middle - 1;
-                if (middle > lowestFTT + 1)
-                {
-                    return FindHighestSafeFloor(lowestFTT + 1, middle);
-                }
-                else
+                if (FloorList[lowestFTT + 1] == false)
                 {
                     return lowestFTT;
                 }
             }
             else
             {
+                if (lowestFTT == 0) return -1; //if drop something like an egg and that's break even if we drop it from ground level than return -1 as a not found signal!
+
+                if (FloorList[lowestFTT - 1] == true) return lowestFTT - 1;
+                // if you run a breaktest and set for example 75 as a test starting floor we still want to get the first safe floor so 
+                // let's start testing the floors bellow 75 or we can return a not found instead, that's depending how we define this in specs.
+
+                //there is no point to go under 0 as we assume the impact level is the ground level (floor 0)
+                return FindHighestSafeFloor(0, lowestFTT);
+            }
+
+            int middle = GetTheMiddleValue(lowestFTT, maxFTT);
+
+            FloorList[middle] = FloorList[middle] ?? DropMarble(middle);
+
+            if ((bool)FloorList[middle])
+            {
+                if (FloorList[middle + 1] == false) return middle;
                 if (maxFTT > middle + 1)
                 {
-                    return FindHighestSafeFloor(middle + 1, maxFTT);
+                    return FindHighestSafeFloor(middle, maxFTT);
                 }
                 else
                 {
-                    return middle;
+                    FloorList[maxFTT] = FloorList[maxFTT] ?? DropMarble(maxFTT);
+                    if (FloorList[maxFTT] == false) return middle;
+                    return maxFTT;
+                }
+            }
+            else
+            {
+                if (FloorList[middle - 1] == true) return middle - 1;
+                if (middle > lowestFTT + 1)
+                {
+                    return FindHighestSafeFloor(lowestFTT, middle);
+                }
+                else
+                {
+                    return lowestFTT;
                 }
             }
         }
